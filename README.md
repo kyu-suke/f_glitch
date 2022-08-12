@@ -5,9 +5,11 @@
 Glitch effects to images.
 
 - basic
+
 ![basic_](https://user-images.githubusercontent.com/9162117/183775728-77000c77-73aa-4395-9b58-0abff74751ea.gif)
 
 - highFrequency
+
 ![highFrequency_](https://user-images.githubusercontent.com/9162117/183775762-64edf697-2c27-4431-8208-935b631b99de.gif)
 
 
@@ -26,11 +28,6 @@ dependencies:
 
 ```dart
 FGlitch(
-  imageProvider: Image.asset('assets/sample.jpg').image
+  imageProvider: const AssetImage('assets/sample.jpg')
 );
 ```
-
-# others
-## used unsplash images
-- https://unsplash.com/photos/ce-K_rj1P7U
-- https://unsplash.com/photos/M6ule9BFwYg

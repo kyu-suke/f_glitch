@@ -1,6 +1,8 @@
 name: f_glitch
-description: Add glitch effect and RGB shift effect to selected image and change frequency of occurrence to these effects.
-version: 0.0.1
+description: >
+  Add glitch effect and RGB shift effect to selected image and
+  change frequency of occurrence to these effects.
+version: 0.0.2
 homepage: https://github.com/kyu-suke/f_glitch
 
 environment:
