@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+/// A widget that renders an glitched image.
+/// Effect has a [glitchRate]% chance of occurring every [frequency] milliseconds.
 class FGlitch extends StatefulWidget {
   FGlitch(
       {Key? key,
@@ -22,19 +24,26 @@ class FGlitch extends StatefulWidget {
         .toList();
   }
 
+
+  /// Interval that happens effect.
   final int frequency; // milliseconds
+
+  /// Rate that happens effect.
   final int glitchRate; // 1 - 100
+
+  /// A image that is used to effected.
   final ImageProvider imageProvider;
+
   late final List<_ColorChannel> _colorChannels;
   late final List<_GlitchMask> _glitchList;
 
-  final List<Color> _defaultChannelColors = [
+  final List<Color> _defaultChannelColors = const [
     Colors.red,
     Colors.green,
     Colors.blue,
   ];
 
-  final List<BlendMode> _defaultGlitchList = [
+  final List<BlendMode> _defaultGlitchList = const [
     BlendMode.softLight,
     BlendMode.multiply,
   ];
@@ -46,18 +55,30 @@ class FGlitch extends StatefulWidget {
 class _FGlitchState extends State<FGlitch> {
   late int _frequency;
   final _key = GlobalKey();
+  static final Random _random = Random();
+  List<Timer> _timers = [];
 
   @override
   void initState() {
+    super.initState();
+
     _frequency = widget.frequency;
     _fGlitchTimer();
+  }
 
-    super.initState();
+
+  @override
+  void dispose() {
+    for (var timer in _timers) {
+      timer.cancel();
+    }
+    _timers = [];
+    super.dispose();
   }
 
   void _fGlitchTimer() {
-    Timer.periodic(Duration(milliseconds: widget.frequency), (Timer timer) {
-      if (Random().nextInt(100) > widget.glitchRate) return;
+    final timer = Timer.periodic(Duration(milliseconds: widget.frequency), (Timer timer) {
+      if (_random.nextInt(100) > widget.glitchRate) return;
 
       _setTimer(
           _onTimerColorChannelShift(widget._colorChannels
@@ -93,13 +114,15 @@ class _FGlitchState extends State<FGlitch> {
         _fGlitchTimer();
       }
     });
+    _timers.add(timer);
   }
 
   void _setTimer(void Function(Timer) fn, int milliseconds) {
-    Timer.periodic(
+    final timer = Timer.periodic(
       Duration(milliseconds: milliseconds),
       fn,
     );
+    _timers.add(timer);
   }
 
   void Function(Timer) _onTimerColorChannelShift(
@@ -129,7 +152,7 @@ class _FGlitchState extends State<FGlitch> {
         widget._glitchList[key] = glitchMask;
       });
 
-      Timer.periodic(
+      final glitchTimer = Timer.periodic(
         const Duration(milliseconds: 300),
         (Timer timer) {
           timer.cancel();
@@ -141,18 +164,19 @@ class _FGlitchState extends State<FGlitch> {
           });
         },
       );
+      _timers.add(glitchTimer);
     };
   }
 
   EdgeInsets _randomSideMargin(double min, double max) {
-    var side = Random().nextDouble() * (max - min) + min;
+    var side = _random.nextDouble() * (max - min) + min;
     return side < 0
         ? EdgeInsets.only(right: side * -1)
         : EdgeInsets.only(left: side);
   }
 
   double _randomPosition(double min, double max) {
-    return Random().nextDouble() * (max - min) + min;
+    return _random.nextDouble() * (max - min) + min;
   }
 
   Widget _channelWidget(_ColorChannel cc) {
@@ -215,10 +239,10 @@ class _FGlitchState extends State<FGlitch> {
 }
 
 class _InvertedCircleClipper extends CustomClipper<Path> {
-  _InvertedCircleClipper(this._top, this._heightRate);
+  const _InvertedCircleClipper(this._top, this._heightRate);
 
-  late final double _top;
-  late final double _heightRate;
+  final double _top;
+  final double _heightRate;
 
   @override
   Path getClip(Size size) {
@@ -234,17 +258,22 @@ class _InvertedCircleClipper extends CustomClipper<Path> {
 }
 
 class _ColorChannel {
-  _ColorChannel(this._color, {this.topPosition = 0, this.leftPosition = 0});
+  const _ColorChannel(this._color,
+      {this.topPosition = 0, this.leftPosition = 0});
 
-  late final Color _color;
-  double topPosition;
-  double leftPosition;
+  final Color _color;
+
+  /// [_ColorChannel]'s top position.
+  final double topPosition;
+
+  /// [_ColorChannel]'s left position.
+  final double leftPosition;
 }
 
 class _GlitchMask {
   _GlitchMask(this._blendMode);
 
-  late final BlendMode _blendMode;
+  final BlendMode _blendMode;
   EdgeInsets? _leftMargin;
   double _topPosition = 0;
   double _heightRate = 1;
@@ -262,14 +291,16 @@ class _GlitchMask {
 }
 
 class _BlendMask extends SingleChildRenderObjectWidget {
-  final BlendMode blendMode;
-  final double _opacity = 1.0;
-
   const _BlendMask({
     required this.blendMode,
     Key? key,
     Widget? child,
   }) : super(key: key, child: child);
+
+  /// A widget that renders an glitched image.
+  final BlendMode blendMode;
+
+  final double _opacity = 1.0;
 
   @override
   RenderObject createRenderObject(context) {
@@ -284,10 +315,13 @@ class _BlendMask extends SingleChildRenderObjectWidget {
 }
 
 class _RenderBlendMask extends RenderProxyBox {
-  BlendMode blendMode;
-  double opacity;
-
   _RenderBlendMask(this.blendMode, this.opacity);
+
+  /// ColorChannels blend mode.
+  BlendMode blendMode;
+
+  /// ColorChannels opacity.
+  double opacity;
 
   @override
   void paint(context, offset) {

@@ -25,7 +25,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  ImageProvider _imageProvider = Image.asset('assets/sample.jpg').image;
+  ImageProvider _imageProvider = const AssetImage('assets/sample.jpg');
   double _frequency = 1000;
   double _glitchRate = 50;
 
@@ -58,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    _imageProvider = Image.asset('assets/sample.jpg').image;
+                    _imageProvider = const AssetImage('assets/sample.jpg');
                   });
                 },
                 child: const Text('local image'),
@@ -69,9 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
-                    _imageProvider =
-                        Image.network("https://source.unsplash.com/M6ule9BFwYg")
-                            .image;
+                    _imageProvider = const NetworkImage(
+                        "https://source.unsplash.com/M6ule9BFwYg");
                   });
                 },
                 child: const Text('network image'),
