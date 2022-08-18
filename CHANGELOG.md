@@ -1,3 +1,11 @@
-## [0.0.1] - 2022/08/10
+## [0.0.2]
 
-* Initial release.
+- use static Random()
+- timer.cancel
+- add doc
+- update example
+- etc
+
+## [0.0.1]
+
+- Initial release.
