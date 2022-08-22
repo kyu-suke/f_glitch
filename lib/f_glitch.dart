@@ -10,6 +10,7 @@ class FGlitch extends StatefulWidget {
   FGlitch(
       {Key? key,
       required this.imageProvider,
+      this.imageFit,
       this.frequency = 1000,
       this.glitchRate = 50,
       List<Color> channelColors = const [],
@@ -33,6 +34,9 @@ class FGlitch extends StatefulWidget {
 
   /// A image that is used to effected.
   final ImageProvider imageProvider;
+
+  // How to fit the image during layout.
+  final BoxFit? imageFit;
 
   late final List<_ColorChannel> _colorChannels;
   late final List<_GlitchMask> _glitchList;
@@ -187,6 +191,7 @@ class _FGlitchState extends State<FGlitch> {
         blendMode: BlendMode.plus,
         child: Image(
           image: widget.imageProvider,
+          fit: widget.imageFit,
           color: cc._color,
           colorBlendMode: BlendMode.multiply,
         ),
@@ -206,6 +211,7 @@ class _FGlitchState extends State<FGlitch> {
               children: [
                 Image(
                   image: widget.imageProvider,
+                  fit: widget.imageFit,
                   color: Colors.white,
                   colorBlendMode: g._blendMode,
                 ),
