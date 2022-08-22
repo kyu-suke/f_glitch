@@ -1,3 +1,7 @@
+## [0.0.3]
+
+- add image fit parameter
+
 ## [0.0.2]
 
 - use static Random()

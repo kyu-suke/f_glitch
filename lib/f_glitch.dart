@@ -25,7 +25,6 @@ class FGlitch extends StatefulWidget {
         .toList();
   }
 
-
   /// Interval that happens effect.
   final int frequency; // milliseconds
 
@@ -70,7 +69,6 @@ class _FGlitchState extends State<FGlitch> {
     _fGlitchTimer();
   }
 
-
   @override
   void dispose() {
     for (var timer in _timers) {
@@ -81,7 +79,8 @@ class _FGlitchState extends State<FGlitch> {
   }
 
   void _fGlitchTimer() {
-    final timer = Timer.periodic(Duration(milliseconds: widget.frequency), (Timer timer) {
+    final timer =
+        Timer.periodic(Duration(milliseconds: widget.frequency), (Timer timer) {
       if (_random.nextInt(100) > widget.glitchRate) return;
 
       _setTimer(
