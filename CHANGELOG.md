@@ -1,3 +1,7 @@
+## [0.1.0]
+
+- add GlitchController
+
 ## [0.0.3]
 
 - add image fit parameter
