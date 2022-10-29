@@ -5,181 +5,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 /// A widget that renders an glitched image.
-/// Effect has a [glitchRate]% chance of occurring every [frequency] milliseconds.
 class FGlitch extends StatefulWidget {
-  FGlitch(
-      {Key? key,
-      required this.imageProvider,
-      this.imageFit,
-      this.frequency = 1000,
-      this.glitchRate = 50,
-      List<Color> channelColors = const [],
-      List<BlendMode> glitchMasks = const []})
-      : super(key: key) {
-    _colorChannels =
-        (channelColors.isEmpty ? _defaultChannelColors : channelColors)
-            .map((c) => _ColorChannel(c))
-            .toList();
-    _glitchList = (glitchMasks.isEmpty ? _defaultGlitchList : glitchMasks)
-        .map((bm) => _GlitchMask(bm))
-        .toList();
-  }
-
-  /// Interval that happens effect.
-  final int frequency; // milliseconds
-
-  /// Rate that happens effect.
-  final int glitchRate; // 1 - 100
+  const FGlitch(
+      {super.key, required this.imageProvider, this.imageFit, this.controller});
 
   /// A image that is used to effected.
   final ImageProvider imageProvider;
 
-  // How to fit the image during layout.
+  /// How to fit the image during layout.
   final BoxFit? imageFit;
 
-  late final List<_ColorChannel> _colorChannels;
-  late final List<_GlitchMask> _glitchList;
-
-  final List<Color> _defaultChannelColors = const [
-    Colors.red,
-    Colors.green,
-    Colors.blue,
-  ];
-
-  final List<BlendMode> _defaultGlitchList = const [
-    BlendMode.softLight,
-    BlendMode.multiply,
-  ];
+  /// A controller about glitch actions.
+  final GlitchController? controller;
 
   @override
   State<FGlitch> createState() => _FGlitchState();
 }
 
 class _FGlitchState extends State<FGlitch> {
-  late int _frequency;
   final _key = GlobalKey();
-  static final Random _random = Random();
-  List<Timer> _timers = [];
+
+  void rebuild() {
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
 
-    _frequency = widget.frequency;
-    _fGlitchTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller?.setHeight(_key.currentContext!.size!.height);
+      widget.controller?.addListener(rebuild);
+    });
   }
 
   @override
   void dispose() {
-    for (var timer in _timers) {
-      timer.cancel();
-    }
-    _timers = [];
     super.dispose();
-  }
-
-  void _fGlitchTimer() {
-    final timer =
-        Timer.periodic(Duration(milliseconds: widget.frequency), (Timer timer) {
-      if (_random.nextInt(100) > widget.glitchRate) return;
-
-      _setTimer(
-          _onTimerColorChannelShift(widget._colorChannels
-              .map((cc) => _ColorChannel(cc._color,
-                  topPosition: _randomPosition(-10, 10),
-                  leftPosition: _randomPosition(-10, 10)))
-              .toList()),
-          100);
-
-      _setTimer(
-          _onTimerColorChannelShift(widget._colorChannels
-              .map((cc) => _ColorChannel(cc._color,
-                  topPosition: _randomPosition(-10, 10),
-                  leftPosition: _randomPosition(-10, 10)))
-              .toList()),
-          200);
-
-      _setTimer(
-          _onTimerColorChannelShift(widget._colorChannels
-              .map((cc) =>
-                  _ColorChannel(cc._color, topPosition: 0, leftPosition: 0))
-              .toList()),
-          300);
-
-      var milliseconds = 100;
-      widget._glitchList.asMap().forEach((key, value) {
-        _setTimer(_onTimerGlitch(key), milliseconds);
-        milliseconds += 100;
-      });
-
-      if (_frequency != widget.frequency) {
-        timer.cancel();
-        _fGlitchTimer();
-      }
-    });
-    _timers.add(timer);
-  }
-
-  void _setTimer(void Function(Timer) fn, int milliseconds) {
-    final timer = Timer.periodic(
-      Duration(milliseconds: milliseconds),
-      fn,
-    );
-    _timers.add(timer);
-  }
-
-  void Function(Timer) _onTimerColorChannelShift(
-      List<_ColorChannel> colorChannels) {
-    return (Timer timer) {
-      timer.cancel();
-      if (!mounted) return;
-      setState(() {
-        colorChannels.asMap().forEach((index, cc) {
-          widget._colorChannels[index] = cc;
-        });
-      });
-    };
-  }
-
-  void Function(Timer) _onTimerGlitch(int key) {
-    return (Timer timer) {
-      timer.cancel();
-      if (!mounted) return;
-      setState(() {
-        var glitchMask = widget._glitchList[key];
-        glitchMask._setPosition(
-            _randomSideMargin(-50, 50),
-            _randomPosition(0, _key.currentContext!.size!.height),
-            _randomPosition(5, 30));
-        glitchMask._setShow(true);
-        widget._glitchList[key] = glitchMask;
-      });
-
-      final glitchTimer = Timer.periodic(
-        const Duration(milliseconds: 300),
-        (Timer timer) {
-          timer.cancel();
-          if (!mounted) return;
-          setState(() {
-            var glitchMask = widget._glitchList[key];
-            glitchMask._setShow(false);
-            widget._glitchList[key] = glitchMask;
-          });
-        },
-      );
-      _timers.add(glitchTimer);
-    };
-  }
-
-  EdgeInsets _randomSideMargin(double min, double max) {
-    var side = _random.nextDouble() * (max - min) + min;
-    return side < 0
-        ? EdgeInsets.only(right: side * -1)
-        : EdgeInsets.only(left: side);
-  }
-
-  double _randomPosition(double min, double max) {
-    return _random.nextDouble() * (max - min) + min;
   }
 
   Widget _channelWidget(_ColorChannel cc) {
@@ -222,9 +84,14 @@ class _FGlitchState extends State<FGlitch> {
     );
   }
 
+  List<_ColorChannel> get _colorChannels => widget.controller!._colorChannels;
+
+  List<_GlitchMask> get _glitchChannels => widget.controller!._glitchChannels;
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return NotificationListener(
+        child: Stack(
       key: _key,
       children: [
         Container(
@@ -232,14 +99,14 @@ class _FGlitchState extends State<FGlitch> {
         ),
 
         // RGB shift
-        ...widget._colorChannels.map((e) => _channelWidget(e)),
+        ..._colorChannels.map((e) => _channelWidget(e)),
 
         // glitch
-        ...widget._glitchList
+        ..._glitchChannels
             .where((element) => element._show)
             .map((g) => _glitchWidget(g)),
       ],
-    );
+    ));
   }
 }
 
@@ -339,5 +206,227 @@ class _RenderBlendMask extends RenderProxyBox {
     super.paint(context, offset);
 
     context.canvas.restore();
+  }
+}
+
+/// A controller to notify glitch data to FGlitch.
+/// Effect has a [glitchRate]% chance of occurring every [frequency] milliseconds.
+class GlitchController extends ChangeNotifier {
+  GlitchController(
+      {this.frequency = 1000,
+      this.glitchRate = 50,
+      this.autoplay = true,
+      List<Color> channelColors = const [],
+      List<BlendMode> glitchMasks = const []}) {
+    _colorChannels =
+        _defaultChannelColors.map((c) => _ColorChannel(c)).toList();
+    _glitchChannels = _defaultGlitchList.map((c) => _GlitchMask(c)).toList();
+    _frequency = frequency;
+
+    if (autoplay) {
+      play();
+    }
+  }
+
+  /// Interval that happens effect. milliseconds.
+  int frequency;
+
+  /// Rate that happens effect. [1 - 100]
+  int glitchRate;
+
+  /// Play glitch interval when widget is created
+  late final bool autoplay;
+
+  List<Timer> _timers = [];
+
+  bool _isPlay = false;
+
+  int _frequency = 0;
+
+  double _widgetHeight = 0;
+
+  late List<_ColorChannel> _colorChannels = [];
+
+  late List<_GlitchMask> _glitchChannels = [];
+
+  final List<Color> _defaultChannelColors = const [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+  ];
+
+  final List<BlendMode> _defaultGlitchList = const [
+    BlendMode.softLight,
+    BlendMode.multiply,
+  ];
+
+  static final Random _random = Random();
+
+  @override
+  void dispose() {
+    _resetTimer();
+    super.dispose();
+  }
+
+  void _resetTimer() {
+    for (var timer in _timers) {
+      timer.cancel();
+    }
+    _timers = [];
+  }
+
+  /// Play glitch animation interval.
+  void play() {
+    if (_isPlay) return;
+    _startGlitchInterval();
+    _isPlay = true;
+  }
+
+  /// Pause glitch animation interval.
+  void pause() {
+    _resetTimer();
+    _isPlay = false;
+  }
+
+  /// Appear glitch effect.
+  void glitch() {
+    _colorChannels = _colorChannels
+        .map((e) => _ColorChannel(e._color,
+            topPosition: _randomPosition(-10, 10),
+            leftPosition: _randomPosition(-10, 10)))
+        .toList();
+
+    for (final g in _glitchChannels) {
+      g._setPosition(_randomSideMargin(-50, 50),
+          _randomPosition(0, _widgetHeight), _randomPosition(5, 30));
+      g._setShow(true);
+    }
+    notifyListeners();
+  }
+
+  /// Disappear glitch effect.
+  void reset() {
+    _colorChannels =
+        _colorChannels.map((e) => _ColorChannel(e._color)).toList();
+
+    for (final g in _glitchChannels) {
+      g._setShow(false);
+    }
+    notifyListeners();
+  }
+
+  /// Height at which the glitch effect appears. Usually, the height is the widget height.
+  void setHeight(double height) {
+    _widgetHeight = height;
+  }
+
+  /// Height at which the glitch effect appears. Usually, the height is the widget height.
+  void setFrequency(int i) {
+    frequency = i;
+  }
+
+  /// Height at which the glitch effect appears. Usually, the height is the widget height.
+  void setGlitchRate(int i) {
+    glitchRate = i;
+  }
+
+  double _randomPosition(double min, double max) {
+    return _random.nextDouble() * (max - min) + min;
+  }
+
+  EdgeInsets _randomSideMargin(double min, double max) {
+    var side = _random.nextDouble() * (max - min) + min;
+    return side < 0
+        ? EdgeInsets.only(right: side * -1)
+        : EdgeInsets.only(left: side);
+  }
+
+  void _startGlitchInterval() {
+    final timer =
+        Timer.periodic(Duration(milliseconds: frequency), (Timer timer) {
+      if (_random.nextInt(100) > glitchRate) return;
+
+      _setTimer(
+          _onTimerColorChannelShift(_colorChannels
+              .map((cc) => _ColorChannel(cc._color,
+                  topPosition: _randomPosition(-10, 10),
+                  leftPosition: _randomPosition(-10, 10)))
+              .toList()),
+          100);
+
+      _setTimer(
+          _onTimerColorChannelShift(_colorChannels
+              .map((cc) => _ColorChannel(cc._color,
+                  topPosition: _randomPosition(-10, 10),
+                  leftPosition: _randomPosition(-10, 10)))
+              .toList()),
+          200);
+
+      _setTimer(
+          _onTimerColorChannelShift(_colorChannels
+              .map((cc) =>
+                  _ColorChannel(cc._color, topPosition: 0, leftPosition: 0))
+              .toList()),
+          300);
+
+      var milliseconds = 100;
+      _glitchChannels.asMap().forEach((key, value) {
+        _setTimer(_onTimerGlitch(key), milliseconds);
+        milliseconds += 100;
+      });
+
+      if (_frequency != frequency) {
+        timer.cancel();
+        _startGlitchInterval();
+      }
+    });
+    _timers.add(timer);
+  }
+
+  void _setTimer(void Function(Timer) fn, int milliseconds) {
+    final timer = Timer.periodic(
+      Duration(milliseconds: milliseconds),
+      fn,
+    );
+    _timers.add(timer);
+  }
+
+  void Function(Timer) _onTimerColorChannelShift(
+      List<_ColorChannel> colorChannels) {
+    return (Timer timer) {
+      timer.cancel();
+
+      colorChannels.asMap().forEach((index, cc) {
+        colorChannels[index] = cc;
+      });
+      _colorChannels = colorChannels;
+      notifyListeners();
+    };
+  }
+
+  void Function(Timer) _onTimerGlitch(int key) {
+    return (Timer timer) {
+      timer.cancel();
+
+      var glitchMask = _glitchChannels[key];
+      glitchMask._setPosition(_randomSideMargin(-50, 50),
+          _randomPosition(0, _widgetHeight), _randomPosition(5, 30));
+      glitchMask._setShow(true);
+      _glitchChannels[key] = glitchMask;
+      notifyListeners();
+
+      final glitchTimer = Timer.periodic(
+        const Duration(milliseconds: 300),
+        (Timer timer) {
+          timer.cancel();
+
+          var glitchMask = _glitchChannels[key];
+          glitchMask._setShow(false);
+          _glitchChannels[key] = glitchMask;
+          notifyListeners();
+        },
+      );
+      _timers.add(glitchTimer);
+    };
   }
 }

@@ -31,11 +31,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _changeSlider(double e) => setState(() {
         _frequency = e;
+        controller.setFrequency(_frequency.toInt());
       });
 
   void _changeGlitchSlider(double e) => setState(() {
         _glitchRate = e;
+        controller.setGlitchRate(_glitchRate.toInt());
       });
+
+  GlitchController controller = GlitchController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,34 +56,71 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 500,
             child: FGlitch(
               imageProvider: _imageProvider,
-              frequency: _frequency.toInt(),
-              glitchRate: _glitchRate.toInt(),
+              controller: controller,
             ),
           ),
           const SizedBox(
             height: 10,
           ),
+          Row(children: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _imageProvider = const AssetImage('assets/sample.jpg');
+                });
+              },
+              child: const Text('local image'),
+            ),
+            const SizedBox(
+              width: 10,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _imageProvider = const NetworkImage(
+                      "https://source.unsplash.com/M6ule9BFwYg");
+                });
+              },
+              child: const Text('network image'),
+            ),
+          ]),
+          const SizedBox(
+            height: 10,
+          ),
           Row(
-            children: <Widget>[
+            children: [
               ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    _imageProvider = const AssetImage('assets/sample.jpg');
-                  });
+                  controller.play();
                 },
-                child: const Text('local image'),
+                child: const Text('play'),
               ),
               const SizedBox(
                 width: 10,
               ),
               ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    _imageProvider = const NetworkImage(
-                        "https://source.unsplash.com/M6ule9BFwYg");
-                  });
+                  controller.pause();
                 },
-                child: const Text('network image'),
+                child: const Text('pause'),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  controller.glitch();
+                },
+                child: const Text('glitch'),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  controller.reset();
+                },
+                child: const Text('reset'),
               ),
             ],
           ),
