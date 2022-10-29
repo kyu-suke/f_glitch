@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/f_glitch.svg)](https://pub.dev/packages/f_glitch)
 
-[web demo](____________________________________________________________________________________)
+[web demo](https://kyu-suke.github.io/examples/flttr/)
 
 Glitch effects to images.
 

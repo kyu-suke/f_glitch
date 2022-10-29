@@ -26,6 +26,22 @@ class FGlitch extends StatefulWidget {
 class _FGlitchState extends State<FGlitch> {
   final _key = GlobalKey();
 
+  bool get _showColorShift => widget.controller!._showColorShift;
+
+  bool get _showGlitch => widget.controller!._showGlitch;
+
+  bool get _showScanline => widget.controller!._showScanline;
+
+  List<_ColorChannel> get _colorChannels => widget.controller!._colorChannels;
+
+  List<_GlitchMask> get _glitchChannels => widget.controller!._glitchChannels;
+
+  List<Color> get _scanLine => widget.controller!._scanLine;
+
+  List<double> get _scanStops => widget.controller!._scanStops;
+
+  double get _scanLineDegree => widget.controller!._scanLineDegree;
+
   void rebuild() {
     setState(() {});
   }
@@ -34,7 +50,7 @@ class _FGlitchState extends State<FGlitch> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       widget.controller?.setKey(_key);
       widget.controller?.addListener(rebuild);
     });
@@ -85,9 +101,24 @@ class _FGlitchState extends State<FGlitch> {
     );
   }
 
-  List<_ColorChannel> get _colorChannels => widget.controller!._colorChannels;
-
-  List<_GlitchMask> get _glitchChannels => widget.controller!._glitchChannels;
+  // fixme: This widget does not appear to work very well. If there is a better way, I would like to switch.
+  Widget _scanLineWidget() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            transform: GradientRotation(_scanLineDegree),
+            tileMode: TileMode.repeated,
+            begin: FractionalOffset.topCenter,
+            end: FractionalOffset.bottomCenter,
+            colors: _scanLine,
+            stops: _scanStops),
+      ),
+      child: Image(
+        image: widget.imageProvider,
+        color: const Color.fromRGBO(1, 1, 1, 0),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,17 +127,22 @@ class _FGlitchState extends State<FGlitch> {
       child: NotificationListener(
           child: Stack(
         children: [
-          Container(
-            color: Colors.black,
+          Image(
+            image: widget.imageProvider,
+            color: _showColorShift ? Colors.black : null,
           ),
 
           // RGB shift
-          ..._colorChannels.map((e) => _channelWidget(e)),
+          if (_showColorShift) ..._colorChannels.map((e) => _channelWidget(e)),
 
           // glitch
-          ..._glitchChannels
-              .where((element) => element._show)
-              .map((g) => _glitchWidget(g)),
+          if (_showGlitch)
+            ..._glitchChannels
+                .where((element) => element._show)
+                .map((g) => _glitchWidget(g)),
+
+          // scanline
+          if (_showScanline) _scanLineWidget(),
         ],
       )),
     );
@@ -218,13 +254,23 @@ class GlitchController extends ChangeNotifier {
   GlitchController(
       {this.frequency = 1000,
       this.glitchRate = 50,
-      this.autoplay = true,
+      autoplay = true,
+      showColorShift = true,
+      showGlitch = true,
+      showScanline = false,
+        double glitchLevel = 1,
       List<Color> channelColors = const [],
-      List<BlendMode> glitchMasks = const []}) {
+      List<BlendMode> glitchMasks = const [],
+      ScanLineGradient? scanLineGradient}) {
     _colorChannels =
         _defaultChannelColors.map((c) => _ColorChannel(c)).toList();
     _glitchChannels = _defaultGlitchList.map((c) => _GlitchMask(c)).toList();
     _frequency = frequency;
+    _showColorShift = showColorShift;
+    _showGlitch = showGlitch;
+    _showScanline = showScanline;
+    _scanLineGradient = scanLineGradient ?? ScanLineGradient();
+    _glitchLevel = glitchLevel;
 
     if (autoplay) {
       play();
@@ -237,8 +283,19 @@ class GlitchController extends ChangeNotifier {
   /// Rate that happens effect. [1 - 100]
   int glitchRate;
 
-  /// Play glitch interval when widget is created
-  late final bool autoplay;
+  late double _glitchLevel;
+
+  late bool _showColorShift;
+
+  late bool _showGlitch;
+
+  late bool _showScanline;
+
+  late ScanLineGradient _scanLineGradient;
+
+  late List<_ColorChannel> _colorChannels = [];
+
+  late List<_GlitchMask> _glitchChannels = [];
 
   List<Timer> _timers = [];
 
@@ -250,9 +307,13 @@ class GlitchController extends ChangeNotifier {
 
   double get _widgetHeight => _key?.currentContext!.size!.height ?? 0;
 
-  late List<_ColorChannel> _colorChannels = [];
+  List<Color> get _scanLine => _scanLineGradient._scanLine;
 
-  late List<_GlitchMask> _glitchChannels = [];
+  List<double> get _scanStops => _scanLineGradient._scanStops;
+
+  double get _scanLineDegree => _scanLineGradient._scanLineDegree;
+
+  double get _glitchCoefficient => 1.1*_glitchLevel;
 
   final List<Color> _defaultChannelColors = const [
     Colors.red,
@@ -280,6 +341,48 @@ class GlitchController extends ChangeNotifier {
     _timers = [];
   }
 
+  /// Set glitch level.
+  void setGlitchLevel(double level) {
+    _glitchLevel = level;
+    notifyListeners();
+  }
+
+  /// Show color shift effect.
+  void showColorShift() {
+    _showColorShift = true;
+    notifyListeners();
+  }
+
+  /// Hide color shift effect.
+  void hideColorShift() {
+    _showColorShift = false;
+    notifyListeners();
+  }
+
+  /// Show glitch effect
+  void showGlitch() {
+    _showGlitch = true;
+    notifyListeners();
+  }
+
+  /// Hide glitch effect
+  void hideGlitch() {
+    _showGlitch = false;
+    notifyListeners();
+  }
+
+  /// Show scan line.
+  void showScanline() {
+    _showScanline = true;
+    notifyListeners();
+  }
+
+  /// Hide scan line.
+  void hideScanline() {
+    _showScanline = false;
+    notifyListeners();
+  }
+
   /// Play glitch animation interval.
   void play() {
     if (_isPlay) return;
@@ -297,13 +400,13 @@ class GlitchController extends ChangeNotifier {
   void glitch() {
     _colorChannels = _colorChannels
         .map((e) => _ColorChannel(e._color,
-            topPosition: _randomPosition(-10, 10),
-            leftPosition: _randomPosition(-10, 10)))
+            topPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient),
+            leftPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient)))
         .toList();
 
     for (final g in _glitchChannels) {
-      g._setPosition(_randomSideMargin(-50, 50),
-          _randomPosition(0, _widgetHeight), _randomPosition(5, 30));
+      g._setPosition(_randomSideMargin(-50 * _glitchCoefficient, 50 * _glitchCoefficient),
+          _randomPosition(0, _widgetHeight * _glitchCoefficient), _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
       g._setShow(true);
     }
     notifyListeners();
@@ -364,16 +467,16 @@ class GlitchController extends ChangeNotifier {
       _setTimer(
           _onTimerColorChannelShift(_colorChannels
               .map((cc) => _ColorChannel(cc._color,
-                  topPosition: _randomPosition(-10, 10),
-                  leftPosition: _randomPosition(-10, 10)))
+                  topPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient),
+                  leftPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient)))
               .toList()),
           100);
 
       _setTimer(
           _onTimerColorChannelShift(_colorChannels
               .map((cc) => _ColorChannel(cc._color,
-                  topPosition: _randomPosition(-10, 10),
-                  leftPosition: _randomPosition(-10, 10)))
+                  topPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient),
+                  leftPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient)))
               .toList()),
           200);
 
@@ -424,8 +527,8 @@ class GlitchController extends ChangeNotifier {
       timer.cancel();
 
       var glitchMask = _glitchChannels[key];
-      glitchMask._setPosition(_randomSideMargin(-50, 50),
-          _randomPosition(0, _widgetHeight), _randomPosition(5, 30));
+      glitchMask._setPosition(_randomSideMargin(-50 * _glitchCoefficient, 50 * _glitchCoefficient),
+          _randomPosition(0, _widgetHeight * _glitchCoefficient), _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
       glitchMask._setShow(true);
       _glitchChannels[key] = glitchMask;
       notifyListeners();
@@ -443,5 +546,61 @@ class GlitchController extends ChangeNotifier {
       );
       _timers.add(glitchTimer);
     };
+  }
+}
+
+/// Configure about scan lines.
+class ScanLineGradient {
+  ScanLineGradient({
+    int count = 400,
+    double degree = 180,
+  }) {
+    _count = count;
+    _degree = degree;
+  }
+
+  late int _count;
+
+  late double _degree;
+
+  int get _lineSet => _count * 4;
+
+  double get _scanLineDegree => (_degree * -1) * pi / 180;
+
+  List<Color> get _scanLine {
+    List<Color> colors = [];
+    var flip = false;
+    for (var i = 0; i < _lineSet; i++) {
+      if (i % 2 == 0) {
+        flip = !flip;
+      }
+      final col = flip
+          ? const Color.fromRGBO(0, 0, 0, 1)
+          : const Color.fromRGBO(0, 0, 0, 0.0);
+      colors.add(col);
+    }
+    return colors;
+  }
+
+  List<double> get _scanStops {
+    List<double> base = [
+      ...List.generate(_lineSet, (index) {
+        return index % 2 == 0
+            ? ((index * (1 / _lineSet)))
+            : (((index - 1) * (1 / _lineSet)));
+      })
+    ];
+
+    List<double> stops = List.filled(_lineSet, 0);
+    stops.asMap().forEach((key, value) {
+      if (key == 0) {
+        stops[key] = 0;
+      } else if (key == stops.length - 1) {
+        stops[key] = 1;
+      } else {
+        stops[key] = base[key + 1];
+      }
+    });
+    return stops;
   }
 }
