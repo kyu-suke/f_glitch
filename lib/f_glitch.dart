@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -34,7 +35,7 @@ class _FGlitchState extends State<FGlitch> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.controller?.setHeight(_key.currentContext!.size!.height);
+      widget.controller?.setKey(_key);
       widget.controller?.addListener(rebuild);
     });
   }
@@ -90,23 +91,25 @@ class _FGlitchState extends State<FGlitch> {
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener(
-        child: Stack(
+    return RepaintBoundary(
       key: _key,
-      children: [
-        Container(
-          color: Colors.black,
-        ),
+      child: NotificationListener(
+          child: Stack(
+        children: [
+          Container(
+            color: Colors.black,
+          ),
 
-        // RGB shift
-        ..._colorChannels.map((e) => _channelWidget(e)),
+          // RGB shift
+          ..._colorChannels.map((e) => _channelWidget(e)),
 
-        // glitch
-        ..._glitchChannels
-            .where((element) => element._show)
-            .map((g) => _glitchWidget(g)),
-      ],
-    ));
+          // glitch
+          ..._glitchChannels
+              .where((element) => element._show)
+              .map((g) => _glitchWidget(g)),
+        ],
+      )),
+    );
   }
 }
 
@@ -243,7 +246,9 @@ class GlitchController extends ChangeNotifier {
 
   int _frequency = 0;
 
-  double _widgetHeight = 0;
+  GlobalKey? _key;
+
+  double get _widgetHeight => _key?.currentContext!.size!.height ?? 0;
 
   late List<_ColorChannel> _colorChannels = [];
 
@@ -315,9 +320,9 @@ class GlitchController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Height at which the glitch effect appears. Usually, the height is the widget height.
-  void setHeight(double height) {
-    _widgetHeight = height;
+  /// Set FGlitch GlobalKey to use getting widget height and getting ui.Image.
+  void setKey(GlobalKey key) {
+    _key = key;
   }
 
   /// Height at which the glitch effect appears. Usually, the height is the widget height.
@@ -328,6 +333,16 @@ class GlitchController extends ChangeNotifier {
   /// Height at which the glitch effect appears. Usually, the height is the widget height.
   void setGlitchRate(int i) {
     glitchRate = i;
+  }
+
+  /// Getting glitched image as ui.Image
+  /// When you render as flutter web, you need to add some options as below.
+  /// --web-render canvaskit, --release, --dart-define=BROWSER_IMAGE_DECODING_ENABLED=false
+  /// e.g.) flutter run -d chrome --web-renderer canvaskit --release --dart-define=BROWSER_IMAGE_DECODING_ENABLED=false
+  Future<ui.Image> asImage() async {
+    final boundary =
+        _key!.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    return await boundary.toImage();
   }
 
   double _randomPosition(double min, double max) {
