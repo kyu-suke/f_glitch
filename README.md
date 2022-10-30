@@ -25,7 +25,7 @@ https://user-images.githubusercontent.com/9162117/183772721-f78558e6-82f7-4a64-8
 In your pubspec.yaml:
 ```yaml
 dependencies:
-  f_glitch: ^0.1.0
+  f_glitch: ^0.1.1
 ```
 
 ```dart

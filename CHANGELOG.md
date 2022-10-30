@@ -1,6 +1,9 @@
 ## [0.1.1]
 
 - add `asImage()` in `GlitchController`
+- show/hide effects
+- scan line
+- glitch level
 
 ## [0.1.0]
 
