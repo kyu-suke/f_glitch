@@ -305,7 +305,7 @@ class GlitchController extends ChangeNotifier {
 
   GlobalKey? _key;
 
-  double get _widgetHeight => _key?.currentContext!.size!.height ?? 0;
+  double _widgetHeight = 0;
 
   List<Color> get _scanLine => _scanLineGradient._scanLine;
 
@@ -344,43 +344,43 @@ class GlitchController extends ChangeNotifier {
   /// Set glitch level.
   void setGlitchLevel(double level) {
     _glitchLevel = level;
-    notifyListeners();
+    _notify();
   }
 
   /// Show color shift effect.
   void showColorShift() {
     _showColorShift = true;
-    notifyListeners();
+    _notify();
   }
 
   /// Hide color shift effect.
   void hideColorShift() {
     _showColorShift = false;
-    notifyListeners();
+    _notify();
   }
 
   /// Show glitch effect
   void showGlitch() {
     _showGlitch = true;
-    notifyListeners();
+    _notify();
   }
 
   /// Hide glitch effect
   void hideGlitch() {
     _showGlitch = false;
-    notifyListeners();
+    _notify();
   }
 
   /// Show scan line.
   void showScanline() {
     _showScanline = true;
-    notifyListeners();
+    _notify();
   }
 
   /// Hide scan line.
   void hideScanline() {
     _showScanline = false;
-    notifyListeners();
+    _notify();
   }
 
   /// Play glitch animation interval.
@@ -413,7 +413,7 @@ class GlitchController extends ChangeNotifier {
           _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
       g._setShow(true);
     }
-    notifyListeners();
+    _notify();
   }
 
   /// Disappear glitch effect.
@@ -424,12 +424,27 @@ class GlitchController extends ChangeNotifier {
     for (final g in _glitchChannels) {
       g._setShow(false);
     }
-    notifyListeners();
+    _notify();
+  }
+
+  /// Getting glitched image as ui.Image
+  /// When you render as flutter web, you need to add some options as below.
+  /// --web-render canvaskit, --release, --dart-define=BROWSER_IMAGE_DECODING_ENABLED=false
+  /// e.g.) flutter run -d chrome --web-renderer canvaskit --release --dart-define=BROWSER_IMAGE_DECODING_ENABLED=false
+  Future<ui.Image> asImage() async {
+    final boundary =
+        _key!.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    return await boundary.toImage();
   }
 
   /// Set FGlitch GlobalKey to use getting widget height and getting ui.Image.
   void setKey(GlobalKey key) {
     _key = key;
+    _setWidgetHeight(key.currentContext!.size!.height);
+  }
+
+  void _setWidgetHeight(double height) {
+    _widgetHeight = height;
   }
 
   /// Height at which the glitch effect appears. Usually, the height is the widget height.
@@ -442,14 +457,10 @@ class GlitchController extends ChangeNotifier {
     glitchRate = i;
   }
 
-  /// Getting glitched image as ui.Image
-  /// When you render as flutter web, you need to add some options as below.
-  /// --web-render canvaskit, --release, --dart-define=BROWSER_IMAGE_DECODING_ENABLED=false
-  /// e.g.) flutter run -d chrome --web-renderer canvaskit --release --dart-define=BROWSER_IMAGE_DECODING_ENABLED=false
-  Future<ui.Image> asImage() async {
-    final boundary =
-        _key!.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-    return await boundary.toImage();
+  void _notify() {
+    if (_key?.currentWidget != null) {
+      notifyListeners();
+    }
   }
 
   double _randomPosition(double min, double max) {
@@ -526,7 +537,7 @@ class GlitchController extends ChangeNotifier {
         colorChannels[index] = cc;
       });
       _colorChannels = colorChannels;
-      notifyListeners();
+      _notify();
     };
   }
 
@@ -541,7 +552,7 @@ class GlitchController extends ChangeNotifier {
           _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
       glitchMask._setShow(true);
       _glitchChannels[key] = glitchMask;
-      notifyListeners();
+      _notify();
 
       final glitchTimer = Timer.periodic(
         const Duration(milliseconds: 300),
@@ -551,7 +562,7 @@ class GlitchController extends ChangeNotifier {
           var glitchMask = _glitchChannels[key];
           glitchMask._setShow(false);
           _glitchChannels[key] = glitchMask;
-          notifyListeners();
+          _notify();
         },
       );
       _timers.add(glitchTimer);

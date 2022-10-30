@@ -101,26 +101,28 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 10,
             ),
+            Row(children: [
+              ElevatedButton(
+                onPressed: () {
+                  controller.play();
+                },
+                child: const Text('play'),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  controller.pause();
+                },
+                child: const Text('pause'),
+              ),
+            ]),
+            const SizedBox(
+              height: 10,
+            ),
             Row(
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    controller.play();
-                  },
-                  child: const Text('play'),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    controller.pause();
-                  },
-                  child: const Text('pause'),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
                 ElevatedButton(
                   onPressed: () {
                     controller.glitch();
