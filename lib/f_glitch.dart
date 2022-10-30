@@ -440,7 +440,7 @@ class GlitchController extends ChangeNotifier {
   /// Set FGlitch GlobalKey to use getting widget height and getting ui.Image.
   void setKey(GlobalKey key) {
     _key = key;
-    _setWidgetHeight(key.currentContext!.size!.height);
+    _setWidgetHeight(key.currentContext?.size?.height ?? 0);
   }
 
   void _setWidgetHeight(double height) {
