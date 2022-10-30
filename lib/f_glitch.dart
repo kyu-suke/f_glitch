@@ -258,7 +258,7 @@ class GlitchController extends ChangeNotifier {
       showColorShift = true,
       showGlitch = true,
       showScanline = false,
-        double glitchLevel = 1,
+      double glitchLevel = 1,
       List<Color> channelColors = const [],
       List<BlendMode> glitchMasks = const [],
       ScanLineGradient? scanLineGradient}) {
@@ -313,7 +313,7 @@ class GlitchController extends ChangeNotifier {
 
   double get _scanLineDegree => _scanLineGradient._scanLineDegree;
 
-  double get _glitchCoefficient => 1.1*_glitchLevel;
+  double get _glitchCoefficient => 1.1 * _glitchLevel;
 
   final List<Color> _defaultChannelColors = const [
     Colors.red,
@@ -400,13 +400,17 @@ class GlitchController extends ChangeNotifier {
   void glitch() {
     _colorChannels = _colorChannels
         .map((e) => _ColorChannel(e._color,
-            topPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient),
-            leftPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient)))
+            topPosition: _randomPosition(
+                -10 * _glitchCoefficient, 10 * _glitchCoefficient),
+            leftPosition: _randomPosition(
+                -10 * _glitchCoefficient, 10 * _glitchCoefficient)))
         .toList();
 
     for (final g in _glitchChannels) {
-      g._setPosition(_randomSideMargin(-50 * _glitchCoefficient, 50 * _glitchCoefficient),
-          _randomPosition(0, _widgetHeight * _glitchCoefficient), _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
+      g._setPosition(
+          _randomSideMargin(-50 * _glitchCoefficient, 50 * _glitchCoefficient),
+          _randomPosition(0, _widgetHeight * _glitchCoefficient),
+          _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
       g._setShow(true);
     }
     notifyListeners();
@@ -467,16 +471,20 @@ class GlitchController extends ChangeNotifier {
       _setTimer(
           _onTimerColorChannelShift(_colorChannels
               .map((cc) => _ColorChannel(cc._color,
-                  topPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient),
-                  leftPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient)))
+                  topPosition: _randomPosition(
+                      -10 * _glitchCoefficient, 10 * _glitchCoefficient),
+                  leftPosition: _randomPosition(
+                      -10 * _glitchCoefficient, 10 * _glitchCoefficient)))
               .toList()),
           100);
 
       _setTimer(
           _onTimerColorChannelShift(_colorChannels
               .map((cc) => _ColorChannel(cc._color,
-                  topPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient),
-                  leftPosition: _randomPosition(-10 * _glitchCoefficient, 10 * _glitchCoefficient)))
+                  topPosition: _randomPosition(
+                      -10 * _glitchCoefficient, 10 * _glitchCoefficient),
+                  leftPosition: _randomPosition(
+                      -10 * _glitchCoefficient, 10 * _glitchCoefficient)))
               .toList()),
           200);
 
@@ -527,8 +535,10 @@ class GlitchController extends ChangeNotifier {
       timer.cancel();
 
       var glitchMask = _glitchChannels[key];
-      glitchMask._setPosition(_randomSideMargin(-50 * _glitchCoefficient, 50 * _glitchCoefficient),
-          _randomPosition(0, _widgetHeight * _glitchCoefficient), _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
+      glitchMask._setPosition(
+          _randomSideMargin(-50 * _glitchCoefficient, 50 * _glitchCoefficient),
+          _randomPosition(0, _widgetHeight * _glitchCoefficient),
+          _randomPosition(5 * _glitchCoefficient, 30 * _glitchCoefficient));
       glitchMask._setShow(true);
       _glitchChannels[key] = glitchMask;
       notifyListeners();

@@ -38,10 +38,9 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _showScanline = false;
 
   void _changeGlitchLevelSlider(double e) => setState(() {
-    _glitchLevel = e;
-    controller.setGlitchLevel(_glitchLevel);
-  });
-
+        _glitchLevel = e;
+        controller.setGlitchLevel(_glitchLevel);
+      });
 
   void _changeSlider(double e) => setState(() {
         _frequency = e;
@@ -162,14 +161,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   value: _showColorShift,
                   onChanged: (bool? value) {
                     if (value != null) {
-                      value ? controller.showColorShift() : controller.hideColorShift();
+                      value
+                          ? controller.showColorShift()
+                          : controller.hideColorShift();
                       _showColorShift = value;
                     }
                     setState(() {});
                   },
                 ),
                 const Text("color shift"),
-                const SizedBox(width: 20,),
+                const SizedBox(
+                  width: 20,
+                ),
                 Checkbox(
                   value: _showGlitch,
                   onChanged: (bool? value) {
@@ -181,12 +184,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ),
                 const Text("glitch"),
-                const SizedBox(width: 20,),
+                const SizedBox(
+                  width: 20,
+                ),
                 Checkbox(
                   value: _showScanline,
                   onChanged: (bool? value) {
                     if (value != null) {
-                      value ? controller.showScanline() : controller.hideScanline();
+                      value
+                          ? controller.showScanline()
+                          : controller.hideScanline();
                       _showScanline = value;
                     }
                     setState(() {});
