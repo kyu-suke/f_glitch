@@ -36,13 +36,16 @@ class _FGlitchState extends State<FGlitch> {
 
   List<_GlitchMask> get _glitchChannels => widget.controller!._glitchChannels;
 
-  List<Color> get _scanLine => widget.controller!._scanLine;
+  double get _widgetHeight => widget.controller!._widgetHeight;
 
-  List<double> get _scanStops => widget.controller!._scanStops;
+  double get _widgetWidth => widget.controller!._widgetWidth;
 
-  double get _scanLineDegree => widget.controller!._scanLineDegree;
+  double get _lineHeight => widget.controller!._lineHeight;
+
+  Color get _lineColor => widget.controller!._lineColor;
 
   void rebuild() {
+    widget.controller?.setKey(_key);
     setState(() {});
   }
 
@@ -101,22 +104,10 @@ class _FGlitchState extends State<FGlitch> {
     );
   }
 
-  // fixme: This widget does not appear to work very well. If there is a better way, I would like to switch.
   Widget _scanLineWidget() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            transform: GradientRotation(_scanLineDegree),
-            tileMode: TileMode.repeated,
-            begin: FractionalOffset.topCenter,
-            end: FractionalOffset.bottomCenter,
-            colors: _scanLine,
-            stops: _scanStops),
-      ),
-      child: Image(
-        image: widget.imageProvider,
-        color: const Color.fromRGBO(1, 1, 1, 0),
-      ),
+    return CustomPaint(
+      size: Size(_widgetWidth, _widgetHeight),
+      painter: _ScanLinePainter(lineHeight: _lineHeight, lineColor: _lineColor),
     );
   }
 
@@ -251,17 +242,19 @@ class _RenderBlendMask extends RenderProxyBox {
 /// A controller to notify glitch data to FGlitch.
 /// Effect has a [glitchRate]% chance of occurring every [frequency] milliseconds.
 class GlitchController extends ChangeNotifier {
-  GlitchController(
-      {this.frequency = 1000,
-      this.glitchRate = 50,
-      autoplay = true,
-      showColorShift = true,
-      showGlitch = true,
-      showScanline = false,
-      double glitchLevel = 1,
-      List<Color> channelColors = const [],
-      List<BlendMode> glitchMasks = const [],
-      ScanLineGradient? scanLineGradient}) {
+  GlitchController({
+    this.frequency = 1000,
+    this.glitchRate = 50,
+    autoplay = true,
+    showColorShift = true,
+    showGlitch = true,
+    showScanline = false,
+    double glitchLevel = 1,
+    List<Color> channelColors = const [],
+    List<BlendMode> glitchMasks = const [],
+    double lineHeight = 0.5,
+    Color lineColor = Colors.black,
+  }) {
     _colorChannels =
         _defaultChannelColors.map((c) => _ColorChannel(c)).toList();
     _glitchChannels = _defaultGlitchList.map((c) => _GlitchMask(c)).toList();
@@ -269,8 +262,9 @@ class GlitchController extends ChangeNotifier {
     _showColorShift = showColorShift;
     _showGlitch = showGlitch;
     _showScanline = showScanline;
-    _scanLineGradient = scanLineGradient ?? ScanLineGradient();
     _glitchLevel = glitchLevel;
+    _lineHeight = lineHeight;
+    _lineColor = lineColor;
 
     if (autoplay) {
       play();
@@ -291,8 +285,6 @@ class GlitchController extends ChangeNotifier {
 
   late bool _showScanline;
 
-  late ScanLineGradient _scanLineGradient;
-
   late List<_ColorChannel> _colorChannels = [];
 
   late List<_GlitchMask> _glitchChannels = [];
@@ -307,11 +299,11 @@ class GlitchController extends ChangeNotifier {
 
   double _widgetHeight = 0;
 
-  List<Color> get _scanLine => _scanLineGradient._scanLine;
+  double _widgetWidth = 0;
 
-  List<double> get _scanStops => _scanLineGradient._scanStops;
+  double _lineHeight = 0;
 
-  double get _scanLineDegree => _scanLineGradient._scanLineDegree;
+  Color _lineColor = Colors.black;
 
   double get _glitchCoefficient => 1.1 * _glitchLevel;
 
@@ -441,13 +433,18 @@ class GlitchController extends ChangeNotifier {
   void setKey(GlobalKey key) {
     _key = key;
     _setWidgetHeight(key.currentContext?.size?.height ?? 0);
+    _setWidgetWidth(key.currentContext?.size?.width ?? 0);
   }
 
   void _setWidgetHeight(double height) {
     _widgetHeight = height;
   }
 
-  /// Height at which the glitch effect appears. Usually, the height is the widget height.
+  void _setWidgetWidth(double width) {
+    _widgetWidth = width;
+  }
+
+  /// Frequency of glitching.
   void setFrequency(int i) {
     frequency = i;
   }
@@ -570,58 +567,31 @@ class GlitchController extends ChangeNotifier {
   }
 }
 
-/// Configure about scan lines.
-class ScanLineGradient {
-  ScanLineGradient({
-    int count = 400,
-    double degree = 180,
-  }) {
-    _count = count;
-    _degree = degree;
+/// Scan line CustomPainter
+class _ScanLinePainter extends CustomPainter {
+  _ScanLinePainter({lineHeight = 0.5, lineColor = Colors.black}) {
+    _lineHeight = lineHeight;
+    _lineColor = lineColor;
   }
 
-  late int _count;
+  late final double _lineHeight;
+  late final Color _lineColor;
 
-  late double _degree;
-
-  int get _lineSet => _count * 4;
-
-  double get _scanLineDegree => (_degree * -1) * pi / 180;
-
-  List<Color> get _scanLine {
-    List<Color> colors = [];
-    var flip = false;
-    for (var i = 0; i < _lineSet; i++) {
-      if (i % 2 == 0) {
-        flip = !flip;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    paint.color = _lineColor;
+    for (double y = 0; y < size.height; y++) {
+      if (y % 2 == 0) {
+        canvas.drawRect(
+            Rect.fromPoints(Offset(0, y), Offset(size.width, y + _lineHeight)),
+            paint);
       }
-      final col = flip
-          ? const Color.fromRGBO(0, 0, 0, 1)
-          : const Color.fromRGBO(0, 0, 0, 0.0);
-      colors.add(col);
     }
-    return colors;
   }
 
-  List<double> get _scanStops {
-    List<double> base = [
-      ...List.generate(_lineSet, (index) {
-        return index % 2 == 0
-            ? ((index * (1 / _lineSet)))
-            : (((index - 1) * (1 / _lineSet)));
-      })
-    ];
-
-    List<double> stops = List.filled(_lineSet, 0);
-    stops.asMap().forEach((key, value) {
-      if (key == 0) {
-        stops[key] = 0;
-      } else if (key == stops.length - 1) {
-        stops[key] = 1;
-      } else {
-        stops[key] = base[key + 1];
-      }
-    });
-    return stops;
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

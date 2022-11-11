@@ -1,3 +1,7 @@
+## [0.1.2]
+
+- change scanline `LinearGradient` to `CutomPainter`
+
 ## [0.1.1]
 
 - add `asImage()` in `GlitchController`
