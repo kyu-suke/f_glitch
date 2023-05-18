@@ -45,18 +45,20 @@ class _FGlitchState extends State<FGlitch> {
   Color get _lineColor => widget.controller!._lineColor;
 
   void rebuild() {
-    widget.controller?.setKey(_key);
-    setState(() {});
+    if (widget.controller != null) {
+      widget.controller?.setKey(_key);
+      setState(() {});
+    }
   }
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      widget.controller?.setKey(_key);
-      widget.controller?.addListener(rebuild);
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) async {
+    widget.controller?.setKey(_key);
+    widget.controller?.addListener(rebuild);
+    // });
   }
 
   @override
