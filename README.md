@@ -1,3 +1,7 @@
+# notice
+[animated_glitch](https://pub.dev/packages/animated_glitch) is more powerful package.
+It is better to use above package to add glitch effect images.
+
 # f_glitch
 
 [![pub package](https://img.shields.io/pub/v/f_glitch.svg)](https://pub.dev/packages/f_glitch)
